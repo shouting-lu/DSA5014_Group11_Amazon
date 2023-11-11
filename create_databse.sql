@@ -152,3 +152,32 @@ IGNORE 1 ROWS
 (@dummy, transID, asin, quantity);
 
 select * from TransAsin;
+
+CREATE TABLE ProductImage (
+	asin VARCHAR(20) NOT NULL,
+	image VARCHAR(120) NOT NULL,
+	PRIMARY KEY (asin, image),
+	FOREIGN KEY (asin) REFERENCES product(asin)
+);
+LOAD DATA LOCAL INFILE '/Users/shenhaiyalxt163.com/Downloads/product_image.csv'
+INTO TABLE ProductImage
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS
+(@dummy, asin, image);
+
+CREATE TABLE ReviewImage (
+	asin VARCHAR(20) NOT NULL,
+	image VARCHAR(120) NOT NULL,
+	PRIMARY KEY (asin, image),
+	FOREIGN KEY (asin) REFERENCES product(asin)
+);
+LOAD DATA LOCAL INFILE '/Users/shenhaiyalxt163.com/Downloads/review_image.csv'
+INTO TABLE ReviewImage
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS
+(@dummy, asin, image);
+	
