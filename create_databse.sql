@@ -1,15 +1,14 @@
 use project;
 
 CREATE TABLE product (
-	asin VARCHAR(20) NOT NULL,
+    asin VARCHAR(20) NOT NULL,
     title VARCHAR(1000), 
     brand VARCHAR(1000), 
     p_rank VARCHAR(3000),
     rate INT(2),
     price VARCHAR(20),
     description TEXT, 
-    image TEXT,
-		PRIMARY KEY (asin));
+    PRIMARY KEY (asin));
         
 LOAD DATA LOCAL INFILE '/Users/shenhaiyalxt163.com/Downloads/product.csv'
 INTO TABLE product
@@ -17,7 +16,7 @@ FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
-(@dummy, asin, title, brand,p_rank,rate,price, description,image);
+(@dummy, asin, title, brand,p_rank,rate,price, description);
 
 CREATE TABLE AlsoBuy (
 		asin VARCHAR(20) NOT NULL, 
@@ -85,9 +84,9 @@ IGNORE 1 ROWS
 
 select * from customer where customerID like '0000%';
 
--- reviewID VARCHAR(15) NOT NULL,
 CREATE TABLE review (
-	asin VARCHAR(20),
+    reviewID VARCHAR(15) NOT NULL,
+    asin VARCHAR(20),
     customerID VARCHAR(20),
     overall INT,
     vote FLOAT,
@@ -95,7 +94,6 @@ CREATE TABLE review (
     style VARCHAR(1000),
     summary TEXT,
     reviewText TEXT,
-    image TEXT,
     PRIMARY KEY (customerID, asin, reviewTime),
     FOREIGN KEY (customerID) REFERENCES customer (customerID),
     FOREIGN KEY (asin) REFERENCES product (asin)
@@ -107,15 +105,7 @@ FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
-(@dummy, asin, customerID, @dummy, overall, vote, reviewTime, style, summary, reviewText, image);
-
-ALTER TABLE review
-ADD CONSTRAINT fk_review_customer
-FOREIGN KEY (customerID)
-REFERENCES customer(customerID)
-ON UPDATE RESTRICT;
-
-select * from review;
+(@dummy, asin, customerID, @dummy, overall, vote, reviewTime, style, summary, reviewText);
 
 CREATE TABLE transaction (
     transID VARCHAR(20) NOT NULL,
@@ -153,31 +143,32 @@ IGNORE 1 ROWS
 
 select * from TransAsin;
 
-CREATE TABLE ProductImage (
-	asin VARCHAR(20) NOT NULL,
-	image VARCHAR(120) NOT NULL,
-	PRIMARY KEY (asin, image),
-	FOREIGN KEY (asin) REFERENCES product(asin)
+CREATE TABLE product_image (
+    asin VARCHAR(20) NOT NULL,
+    each_image VARCHAR(255),
+    PRIMARY KEY (asin, image),
+    FOREIGN KEY (asin) REFERENCES product(asin)
 );
+
 LOAD DATA LOCAL INFILE '/Users/shenhaiyalxt163.com/Downloads/product_image.csv'
-INTO TABLE ProductImage
+INTO TABLE product_image
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
 (@dummy, asin, image);
 
-CREATE TABLE ReviewImage (
-	asin VARCHAR(20) NOT NULL,
-	image VARCHAR(120) NOT NULL,
-	PRIMARY KEY (asin, image),
-	FOREIGN KEY (asin) REFERENCES product(asin)
+CREATE TABLE review_image (
+    reviewID VARCHAR(15) NOT NULL,
+    each_image VARCHAR(255),
+    PRIMARY KEY (asin, image),
+    FOREIGN KEY (asin) REFERENCES product(asin)
 );
 LOAD DATA LOCAL INFILE '/Users/shenhaiyalxt163.com/Downloads/review_image.csv'
-INTO TABLE ReviewImage
+INTO TABLE review_image
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
-(@dummy, asin, image);
+(@dummy, reviewID, image);
 	
