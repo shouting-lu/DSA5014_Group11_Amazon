@@ -145,8 +145,8 @@ select * from TransAsin;
 
 CREATE TABLE product_image (
     asin VARCHAR(20) NOT NULL,
-    each_image VARCHAR(255),
-    PRIMARY KEY (asin, image),
+    each_image VARCHAR(255) NOT NULL,
+    PRIMARY KEY (asin, each_image),
     FOREIGN KEY (asin) REFERENCES product(asin)
 );
 
@@ -156,13 +156,13 @@ FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
-(@dummy, asin, image);
+(@dummy, asin, each_image);
 
 CREATE TABLE review_image (
     reviewID VARCHAR(15) NOT NULL,
-    each_image VARCHAR(255),
-    PRIMARY KEY (asin, image),
-    FOREIGN KEY (asin) REFERENCES product(asin)
+    each_image VARCHAR(255) NOT NULL,
+    PRIMARY KEY (reviewID, each_image),
+    FOREIGN KEY (reviewID) REFERENCES customer(customerID)
 );
 LOAD DATA LOCAL INFILE '/Users/shenhaiyalxt163.com/Downloads/review_image.csv'
 INTO TABLE review_image
@@ -170,5 +170,5 @@ FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
-(@dummy, reviewID, image);
+(@dummy, reviewID, each_image);
 	
