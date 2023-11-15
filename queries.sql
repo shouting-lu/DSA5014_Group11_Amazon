@@ -85,3 +85,18 @@ FROM (
 ) as ranked_products
 WHERE product_rank = 1
 LIMIT 10;
+
+/*8. Calculate the total sales volume for the products which have the top 10 count of occurrences */
+SELECT asin, sum(quantity)
+FROM TransAsin AS ta
+WHERE ta.asin IN (
+	SELECT asinV
+        FROM(
+		SELECT asinV, 
+                COUNT(asinV) AS occurrence_count, RANK() OVER (ORDER BY COUNT(asinV) DESC) AS rnk
+                FROM AlsoView 
+                GROUP BY asinV
+                ) AS ranked
+        WHERE rnk <= 10
+        )
+GROUP BY asin;
