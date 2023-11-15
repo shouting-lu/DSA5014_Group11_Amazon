@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.searchweb.mapper.AlsobuyMapper">
+    <select id="findProductsByAsinList" parameterType="map" resultType="com.example.searchweb.entity.Products">
+        SELECT p2.*
+        FROM product p2
+        WHERE p2.asin IN (
+        SELECT ab.asinB
+        FROM alsobuy ab
+        WHERE
+        (
+        <if test='asin1 != null'> (#{asin1} IS NOT NULL AND ab.asin = #{asin1}) </if>
+        <if test='asin2 != null'> OR (#{asin2} IS NOT NULL AND ab.asin = #{asin2}) </if>
+        <if test='asin3 != null'> OR (#{asin3} IS NOT NULL AND ab.asin = #{asin3}) </if>
+        ) AND (ab.asinB NOT IN (#{asin1}, #{asin2}, #{asin3}))
+        )
+        ORDER BY p2.rate DESC
+        LIMIT 6;
+    </select>
+</mapper>
