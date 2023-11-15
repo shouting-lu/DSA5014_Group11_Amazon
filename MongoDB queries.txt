@@ -114,4 +114,40 @@ var endTime = new Date();
 var executionTime = endTime - startTime;
 print("Execution time: " + executionTime + " milliseconds");
 
+8. Calculate the total sales volume for the products which have the top 10 count of occurrences
+var top_asinV = db.Product.aggregate([
+            {$project:{
+                _id:0,
+                also_view_list:{$split: ["$also_view_list",","]}}},
+            {$unwind: "$also_view_list"},
+            
+            {$group:{
+                _id: "$also_view_list",
+                occurence: {$sum: 1}}},
+            {$sort: {occurrence: -1}},
+            {$group: {
+                _id: null,
+                asinV_list: { $push: {"$_id"} },
+                occurrence_first_10: { 
+                $push: {"$occurrence"} }
+        }
+    },
+            {$unwind: "$asinV_list"},
+            {$match: 
+                {occurrence: { $gt: "$occurrence_first_10" }}},
+    {$project: {
+            _id: 0,
+            asinV_list: 1}}]);
+
+    let topVlist = [];
+    top_asinV.forEach(item => {
+    topVlist = topVlist.concat(item.asinV_list);
+
+
+db.Transaction.aggregate([    
+	{$match:  {
+	asin:{ $in: topVlist }}},{
+	$group: {
+            _id: "$asin",
+            total_amount: { $sum: "$quantity" }}}]);
 
