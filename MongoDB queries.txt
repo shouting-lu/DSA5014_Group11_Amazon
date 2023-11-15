@@ -1,0 +1,117 @@
+1. Query products according to the entered description, sort them in descending order by rating and take the top three.
+
+ 	db.Product.find({description:{$regex:"leather"}}).sort({ rate: -1 }).limit(3)
+
+2. Query based on the entered category keywords, sort in descending order based on ratings, and take the top three
+
+	db.Product.find({categories:{$regex:"leather"}}).sort({ rate: -1 }).limit(3) 
+         //DESC -1, ASCE 1
+3. Query review content based on asin value.
+	
+	db.Review.find({"asin": "0204444403"});
+
+4.Query the products in also buy based on the three queried asin values, sort according to the product’s score, and take the top six
+
+	 var asinValues = ['B01DLVYKDC', 'B00OO05ZHK', 'B01HHLHG88'];
+         db.Product.aggregate([ {
+            $match: {
+              asin: { $in: asinValues } } }, {
+            $project: {              _id: 0,
+              also_buy: { $split: ["$also_buy", ","] } } }, {
+            $unwind: "$also_buy" }, {
+            $group: {
+              _id: "$also_buy",  score: { $max: "$rate" }  }  }, {
+              $sort: {              score: -1 }  }, {
+            $limit: 6  } ]);
+
+5.Find all the transactions given the customer’s ID
+
+ 	db.Transaction.find({"customerID": "00000000000008"});
+
+6. Find the most bought product of a customer given the ID.
+
+	var result = db.Transaction.aggregate([
+            { $match: { customerID: "00000000000008" } }, // Match the specified customerID
+            { $project: {
+                asin_list: {
+                $map: {
+                input: {
+                $split: ["$asin_list", "),("]  },   in: {
+                $arrayElemAt: [ { 
+		$split: [{ 
+		$trim: { 
+		input: "$$this", chars: ")" } }, ","] }, 1 ] } } },  _id: 0 }  }])
+                
+        var asinList = result.toArray()[0].asin_list;
+        var maxNumber = Math.max(...asinList);
+        print("The max quantity " + maxNumber);
+
+7. Identify the brands that a user frequently purchases base on the historical transaction data. For each of these brands, recommends the top rate products to the user.
+
+        var asinList = db.Transaction.aggregate([
+            { $match: { customerID: "00000000000008" } },    { $project: {
+                asin_list: {
+                $map: {
+                input: {
+                $split: ["$asin_list", "),("]  },   in: {
+                $arrayElemAt: [ { 
+		$split: [{ 
+		$trim: { 
+		input: "$$this", chars: "( )" } }, ","] }, 0 ] } } },  _id: 0 }  }])
+    let flattenedAsinList = [];
+
+        // Manually iterate to build the ASIN array
+        asinList.forEach(item => {
+          flattenedAsinList = flattenedAsinList.concat(item.asin_list);
+        });
+        
+        // Find matching ASINs in the Product table and count brands
+        var brandCounts = db.Product.aggregate([
+          {
+            $match: {
+              asin: { $in: flattenedAsinList }     }  },  {
+            $group: {
+              _id: "$brand", 
+              count: { $sum: 1 }     }  },  {
+            $project: {
+              _id: 0, 
+              brand: "$_id", 
+              count: 1     }  }]);
+        
+        // Output brand count results
+        printjson(brandCounts.toArray());
+                
+        // Find the most frequent brand in the brandCounts array
+        var maxCount = 0;
+        var mostCommonBrand = '';
+        
+        // Loop through brandCounts to find the brand with the highest count
+        brandCounts.forEach(function(doc) {
+          if (doc.count > maxCount) {
+            maxCount = doc.count;
+            mostCommonBrand = doc.brand;
+          }
+        });
+        
+        // Output the most frequent brand and its count
+        print("Most common brand: " + mostCommonBrand + ", Count: " + maxCount);
+        
+        // Find the top 10 products with a rate of 5 for the most frequent brand
+        var topProducts = db.Product.find({
+          brand: mostCommonBrand,
+          rate: 5
+        }).limit(10);
+        
+        // Output the details of the top 10 products
+        topProducts.forEach(function(product) {
+          print("Product: " + product.asin + ", Rate: " + product.rate);
+        });
+
+//Run time query
+var startTime = new Date();
+// Replace with run code
+var endTime = new Date();
+var executionTime = endTime - startTime;
+print("Execution time: " + executionTime + " milliseconds");
+
+
