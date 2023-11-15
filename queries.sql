@@ -86,6 +86,7 @@ FROM (
 WHERE product_rank = 1
 LIMIT 10;
 
+
 /*8. Calculate the total sales volume for the products which have the top 10 count of occurrences */
 SELECT asin, sum(quantity)
 FROM TransAsin AS ta
