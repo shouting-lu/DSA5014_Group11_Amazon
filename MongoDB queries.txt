@@ -195,7 +195,7 @@ satisfied_asinV.forEach(item => {
 //delete single quote in satisfied_asinV_arr
 const cleaned_satisfied_asinV_arr = satisfied_asinV_arr.map(value => value.replace(/'/g, ''));
 
-//retrieve the asin and its corresponding total quantity from the transaction collection, such that the asin is among the top ten in //terms of frequency within the field asinV in collection products.
+//retrieve the asin and its corresponding total quantity from the transaction collection, such that the asin is among the top ten in terms of frequency within the field asinV in collection products.
 db.transaction.aggregate([
   {
     $project: {
