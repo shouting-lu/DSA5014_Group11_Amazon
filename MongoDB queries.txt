@@ -115,39 +115,146 @@ var executionTime = endTime - startTime;
 print("Execution time: " + executionTime + " milliseconds");
 
 8. Calculate the total sales volume for the products which have the top 10 count of occurrences
-var top_asinV = db.Product.aggregate([
-            {$project:{
-                _id:0,
-                also_view_list:{$split: ["$also_view_list",","]}}},
-            {$unwind: "$also_view_list"},
-            
-            {$group:{
-                _id: "$also_view_list",
-                occurence: {$sum: 1}}},
-            {$sort: {occurrence: -1}},
-            {$group: {
-                _id: null,
-                asinV_list: { $push: {"$_id"} },
-                occurrence_first_10: { 
-                $push: {"$occurrence"} }
+
+//find the first 10 maximum counts of occurrences 
+var dist_occur_count = db.products.aggregate([
+  {
+    $project: {
+      _id: 0,
+      split_asinV: { $split: ["$asinV", ", "] }
+    }
+  },
+  {
+    $unwind: '$split_asinV'
+  },
+  {
+    $group: {
+      _id: '$split_asinV',
+      occurrence: { $sum: 1 }
+    }
+  },
+  {
+    $group: {
+      _id: '$occurrence',
+      count: { $sum: 1 }
+    }
+  },
+  {
+    $sort: { _id: -1 }
+  },
+  {
+    $limit: 10
+  }
+]);
+
+//store the first 10 maximum counts of occurrence in a list named dist_occur_arr 
+var dist_occur_arr = [];
+dist_occur_count.forEach(function(doc) {
+  dist_occur_arr.push(doc._id);
+});
+
+
+//find those asinV whose counts of occurrence is the same as the counts in dist_occur_arr
+var satisfied_asinV = db.products.aggregate([
+  {
+    $project: {
+      _id: 0,
+      asinV: 1,
+      split_asinV: { $split: ["$asinV", ", "] }
+    }
+  },
+  {
+    $unwind: '$split_asinV'
+  },
+  {
+    $group: {
+      _id: '$split_asinV',
+      occurrence: { $sum: 1 }
+    }
+  },
+  {
+    $group: {
+      _id: '$occurrence',
+      asinV_list: { $push: '$_id' }
+    }
+  },
+  {
+    $match: {
+      _id: { $in: dist_occur_arr }
+    }
+  }
+]);
+
+//store those asinV in a list named satisfied_asinV_arr
+let satisfied_asinV_arr = [];
+
+satisfied_asinV.forEach(item => {
+  satisfied_asinV_arr = satisfied_asinV_arr.concat(item.asinV_list);
+});
+
+//delete single quote in satisfied_asinV_arr
+const cleaned_satisfied_asinV_arr = satisfied_asinV_arr.map(value => value.replace(/'/g, ''));
+
+//retrieve the asin and its corresponding total quantity from the transaction collection, such that the asin is among the top ten in //terms of frequency within the field asinV in collection products.
+db.transaction.aggregate([
+  {
+    $project: {
+      _id: 0,
+      transID: 1,
+      customerID: 1,
+      transTime: 1,
+      asin_list: 1
+    }
+  },
+  {
+    $project: {
+      transID: 1,
+      customerID: 1,
+      transTime: 1,
+      items: {
+        $map: {
+          input: { $split: ["$asin_list", "),"] },
+          as: "item",
+          in: {
+            asin: {
+              $trim: {
+                input: {
+                  $arrayElemAt: [
+                    { $split: ["$$item", ","] },
+                    0
+                  ]
+                },
+                chars: "()"
+              }
+            },
+            quantity: {
+              $toInt: {
+                $trim: {
+                  input: {
+                    $arrayElemAt: [
+                      { $split: ["$$item", ","] },
+                      1
+                    ]
+                  },
+                  chars: ")"
+                }
+              }
+            }
+          }
         }
-    },
-            {$unwind: "$asinV_list"},
-            {$match: 
-                {occurrence: { $gt: "$occurrence_first_10" }}},
-    {$project: {
-            _id: 0,
-            asinV_list: 1}}]);
-
-    let topVlist = [];
-    top_asinV.forEach(item => {
-    topVlist = topVlist.concat(item.asinV_list);
-
-
-db.Transaction.aggregate([    
-	{$match:  {
-	asin:{ $in: topVlist }}},{
-	$group: {
-            _id: "$asin",
-            total_amount: { $sum: "$quantity" }}}]);
-
+      }
+    }
+  },
+  {
+    $unwind: "$items"
+  },
+  {$group: {
+      _id: "$items.asin",
+      totalQuantity: { $sum: "$items.quantity" }
+    }},
+{
+    $match: {
+      _id: { $in: cleaned_satisfied_asinV_arr }
+    }
+  }
+]);
